@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: carlotracko
+      POSTGRES_PASSWORD: carlotracko_dev
+      POSTGRES_DB: carlotracko
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carlotracko"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: ./apps/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://carlotracko:carlotracko_dev@postgres:5432/carlotracko
+      JWT_SECRET: dev-secret-change-in-production-min-32-chars
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: changeme
+      PORT: 3000
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
